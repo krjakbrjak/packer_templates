@@ -1,0 +1,23 @@
+#cloud-config
+autoinstall:
+  version: 1
+  locale: en_US
+  network:
+    version: 2
+    ethernets:
+      all:
+        match:
+          name: en*
+        dhcp4: true
+  ssh:
+    install-server: yes
+    allow-pw: yes
+  user-data:
+    ssh_pwauth: True
+    users:
+      - name: packer
+        plain_text_passwd: packer
+        sudo: ALL=(ALL) NOPASSWD:ALL
+        shell: /bin/bash
+        groups: sudo
+        lock_passwd: false
