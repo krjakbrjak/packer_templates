@@ -11,6 +11,16 @@ packer {
   }
 }
 
+variable "username" {
+  type = string
+  default = "packer"
+}
+
+variable "password" {
+  type = string
+  default = "packer"
+}
+
 variable "accelerator" {
   type = string
   default = "kvm"
@@ -64,8 +74,8 @@ locals {
 Vagrant.configure(2) do |config|
   config.vm.box = "${var.vm_name}.box"
   config.vm.provider :qemu do |qe, override|
-    override.ssh.username = "packer"
-    override.ssh.password = "packer"
+    override.ssh.username = "${var.username}"
+    override.ssh.password = "${var.password}"
     qe.qemu_dir = "${var.qemu_dir}"
     qe.arch = "${var.qemu_arch}"
     qe.machine = "type=${var.machine},accel=${var.accelerator}"
@@ -91,17 +101,16 @@ source "qemu" "serverubuntu" {
   accelerator = var.accelerator
   cpus = 4
   memory = "4096"
-  http_directory = "http"
   headless = true
   ssh_port = 22
-  ssh_username = "packer"
-  ssh_password = "packer"
+  ssh_username = "${var.username}"
+  ssh_password = "${var.password}"
   ssh_timeout = "900s"
   qemu_binary = var.qemu_binary
   boot_wait = "1s"
   boot_command = [
     "c",
-    "linux /casper/vmlinuz --- autoinstall ds='nocloud-net;s=http://{{ .HTTPIP }}:{{ .HTTPPort }}/server' ",
+    "linux /casper/vmlinuz --- autoinstall ds='nocloud-net;s=http://{{ .HTTPIP }}:{{ .HTTPPort }}/' ",
     "<enter><wait>",
     "initrd /casper/initrd<enter><wait>",
     "boot<enter>"
@@ -109,7 +118,36 @@ source "qemu" "serverubuntu" {
   qemuargs = [
     ["-cpu", "host"]
   ]
-  shutdown_command = "echo 'packer' | sudo -S shutdown -P now"
+  http_content = {
+    "/meta-data" = <<EOF
+EOF
+    "/user-data" = <<EOF
+#cloud-config
+autoinstall:
+  version: 1
+  locale: en_US
+  network:
+    version: 2
+    ethernets:
+      all:
+        match:
+          name: en*
+        dhcp4: true
+  ssh:
+    install-server: yes
+    allow-pw: yes
+  user-data:
+    ssh_pwauth: True
+    users:
+      - name: ${var.username}
+        plain_text_passwd: ${var.password}
+        sudo: ALL=(ALL) NOPASSWD:ALL
+        shell: /bin/bash
+        groups: sudo
+        lock_passwd: false
+EOF
+  }
+  shutdown_command = "echo '${var.password}' | sudo -S shutdown -P now"
 }
 
 build {
