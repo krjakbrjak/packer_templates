@@ -28,12 +28,12 @@ variable "vm_name" {
 
 variable "iso_url" {
   type = string
-  default = "https://releases.ubuntu.com/jammy/ubuntu-22.04.4-live-server-amd64.iso"
+  default = "https://releases.ubuntu.com/noble/ubuntu-24.04.3-live-server-amd64.iso"
 }
 
 variable "iso_checksum" {
   type = string
-  default = "file:https://releases.ubuntu.com/jammy/SHA256SUMS"
+  default = "file:https://releases.ubuntu.com/noble/SHA256SUMS"
 }
 
 variable "qemu_arch" {
