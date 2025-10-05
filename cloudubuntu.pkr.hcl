@@ -43,7 +43,7 @@ variable "iso_checksum" {
 
 variable "qemu_arch" {
   type    = string
-  default = "x86_64"
+  default = "amd64"
 }
 
 variable "qemu_dir" {
