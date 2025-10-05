@@ -12,47 +12,47 @@ packer {
 }
 
 variable "username" {
-  type = string
+  type    = string
   default = "packer"
 }
 
 variable "password" {
-  type = string
+  type    = string
   default = "packer"
 }
 
 variable "accelerator" {
-  type = string
+  type    = string
   default = "kvm"
 }
 
 variable "machine" {
-  type = string
+  type    = string
   default = "q35"
 }
 
 variable "vm_name" {
-  type = string
+  type    = string
   default = "cloudubuntu"
 }
 
 variable "iso_checksum" {
-  type = string
+  type    = string
   default = "file:https://cloud-images.ubuntu.com/releases/25.04/release/SHA256SUMS"
 }
 
 variable "qemu_arch" {
-  type = string
+  type    = string
   default = "x86_64"
 }
 
 variable "qemu_dir" {
-  type = string
+  type    = string
   default = "/usr/bin"
 }
 
 variable "qemu_ssh_port" {
-  type = number
+  type    = number
   default = 52222
 }
 
@@ -86,21 +86,21 @@ EOF
 }
 
 source "qemu" "cloudubuntu" {
-  vm_name = var.vm_name
-  iso_checksum = var.iso_checksum
-  disk_image = true
-  format = "qcow2"
+  vm_name          = var.vm_name
   iso_url          = local.iso_url
+  iso_checksum     = var.iso_checksum
+  disk_image       = true
+  format           = "qcow2"
   output_directory = "build/${local.build_timestamp}"
-  machine_type = var.machine
-  accelerator = var.accelerator
-  cpus = 4
-  memory = "4096"
-  headless = true
-  ssh_port = 22
-  ssh_username = "${var.username}"
-  ssh_password = "${var.password}"
-  ssh_timeout = "900s"
+  machine_type     = var.machine
+  accelerator      = var.accelerator
+  cpus             = 4
+  memory           = "4096"
+  headless         = true
+  ssh_port         = 22
+  ssh_username     = "${var.username}"
+  ssh_password     = "${var.password}"
+  ssh_timeout      = "900s"
   qemu_binary      = local.qemu_binary
   http_content = {
     "/meta-data" = <<EOF
@@ -130,15 +130,15 @@ build {
   sources = [
     "qemu.cloudubuntu"
   ]
-  
+
   post-processors {
     post-processor "vagrant" {
       keep_input_artifact = true
-        output = local.vagrant_box
+      output              = local.vagrant_box
     }
     post-processor "shell-local" {
       inline = ["cat <<EOF >> ${local.build_directory}/Vagrantfile",
-"${local.vagrant_file}EOF"
+        "${local.vagrant_file}EOF"
       ]
     }
   }
