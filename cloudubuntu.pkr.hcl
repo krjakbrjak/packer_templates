@@ -36,11 +36,6 @@ variable "vm_name" {
   default = "cloudubuntu"
 }
 
-variable "iso_url" {
-  type = string
-  default = "https://cloud-images.ubuntu.com/releases/25.04/release/ubuntu-25.04-server-cloudimg-amd64.img"
-}
-
 variable "iso_checksum" {
   type = string
   default = "file:https://cloud-images.ubuntu.com/releases/25.04/release/SHA256SUMS"
@@ -49,11 +44,6 @@ variable "iso_checksum" {
 variable "qemu_arch" {
   type = string
   default = "x86_64"
-}
-
-variable "qemu_binary" {
-  type = string
-  default = "qemu-system-x86_64"
 }
 
 variable "qemu_dir" {
@@ -67,17 +57,22 @@ variable "qemu_ssh_port" {
 }
 
 locals {
+  iso_url     = "https://cloud-images.ubuntu.com/releases/25.04/release/ubuntu-25.04-server-cloudimg-${var.qemu_arch}.img"
+  qemu_binary = var.qemu_arch == "arm64" ? "qemu-system-aarch64" : "qemu-system-x86_64"
+  # Architecture-specific arguments
+  arm64_args      = var.qemu_arch == "arm64" ? [["-bios", "edk2-aarch64-code.fd"]] : []
   build_timestamp = timestamp()
   build_directory = "build/${local.build_timestamp}"
-  vagrant_box = "${local.build_directory}/${var.vm_name}.box"
-  vagrant_file = <<EOF
+  vagrant_box     = "${local.build_directory}/${var.vm_name}.box"
+  vagrant_arch    = var.qemu_arch == "arm64" ? "aarch64" : var.qemu_arch
+  vagrant_file    = <<EOF
 Vagrant.configure(2) do |config|
   config.vm.box = "${var.vm_name}.box"
   config.vm.provider :qemu do |qe, override|
     override.ssh.username = "${var.username}"
     override.ssh.password = "${var.password}"
     qe.qemu_dir = "${var.qemu_dir}"
-    qe.arch = "${var.qemu_arch}"
+    qe.arch = "${local.vagrant_arch}"
     qe.machine = "type=${var.machine},accel=${var.accelerator}"
     qe.cpu = "host"
     qe.net_device = "virtio-net"
@@ -92,10 +87,10 @@ EOF
 
 source "qemu" "cloudubuntu" {
   vm_name = var.vm_name
-  iso_url = var.iso_url
   iso_checksum = var.iso_checksum
   disk_image = true
   format = "qcow2"
+  iso_url          = local.iso_url
   output_directory = "build/${local.build_timestamp}"
   machine_type = var.machine
   accelerator = var.accelerator
@@ -106,7 +101,7 @@ source "qemu" "cloudubuntu" {
   ssh_username = "${var.username}"
   ssh_password = "${var.password}"
   ssh_timeout = "900s"
-  qemu_binary = var.qemu_binary
+  qemu_binary      = local.qemu_binary
   http_content = {
     "/meta-data" = <<EOF
 EOF
@@ -123,10 +118,10 @@ users:
 packages: []
 EOF
   }
-  qemuargs = [
+  qemuargs = concat([
     ["-cpu", "host"],
     ["-smbios", "type=1,serial=ds=nocloud-net;s=http://{{ .HTTPIP }}:{{ .HTTPPort }}/"]
-  ]
+  ], local.arm64_args)
   shutdown_command = "sudo -S shutdown -P now"
 }
 
