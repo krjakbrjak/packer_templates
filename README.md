@@ -17,6 +17,16 @@ packer init <PACKER_TEMPLATE>
 packer build <PACKER_TEMPLATE>
 ```
 
+To build images for different platforms, adjust the variables as needed. For example, to create an arm64 image on macOS (Apple Silicon), use:
+
+```shell
+packer build -var qemu_arch=arm64 \
+    -var machine=virt \
+    -var accelerator=hvf \
+    -var qemu_dir=/opt/homebrew/share/qemu \
+    ./cloudubuntu.pkr.hcl
+```
+
 ## Start VM
 
 ```shell
